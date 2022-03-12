@@ -7,50 +7,44 @@
 
 import SwiftUI
 
-// Course Structure
-struct Course: Hashable, Codable {
-    let name: String
-    let image: String
-}
-
-class ViewModel: ObservableObject {
-    // stateみたいなもん
-    // 変更をUIに通知できる
-    @Published var courses: [Course] = []
+struct URLImage: View {
     
-    func fetch() {
-        
-        /// api url
-        guard let url = URL(string:
-                                "https://iosacademy.io/api/v1/courses/index.php") else {
+    let urlString: String
+    
+    @State var data: Data?
+    
+    var body: some View {
+        if let data = data, let uiimage = UIImage(data: data){
+            Image(uiImage: uiimage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 130, height: 70)
+                .background(Color.gray)
+        }
+        else {
+                        Image(systemName: "video")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                            .frame(width: 130, height: 70)
+                            .background(Color.gray)
+                            .onAppear{
+                                fetchData()
+                            }
+        }
+    }
+    
+    public func fetchData() {
+        guard let url = URL(string: urlString) else {
             return
         }
         
-        // call api
-        let task = URLSession.shared.dataTask(with: url) { [weak self]data, _, error in
-            guard let data = data, error == nil else {
-                return
-            }
-            
-            do {
-                /// Json decord
-                let courses = try JSONDecoder().decode([Course].self, from: data)
-                
-                /// Queue for ui update
-                DispatchQueue.main.async {
-                    self?.courses = courses
-                }
-            }
-            catch {
-                print(error)
-            }
-        }
+        let task = URLSession.shared.dataTask(with: url) { data, _, _ in self.data = data}
         task.resume()
     }
 }
 
 struct ContentView: View {
-    /// craete instance
+    /// create instance
     @StateObject var viewModel = ViewModel()
     
     var body: some View {
@@ -58,9 +52,7 @@ struct ContentView: View {
             List {
                 ForEach(viewModel.courses, id: \.self) { course in
                     HStack {
-                        Image("")
-                            .frame(width: 130, height: 70)
-                            .background(Color.gray)
+                        URLImage(urlString: course.image)
                         
                         Text(course.name)
                             .bold()
