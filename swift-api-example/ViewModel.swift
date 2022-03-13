@@ -18,35 +18,36 @@ class ViewModel: ObservableObject {
     // stateみたいなもん
     // 変更をUIに通知できる
     @Published var courses: [Course] = []
-    
+
     func fetch() {
-        
+
         /// api url
-        guard let url = URL(string:
-                                "https://iosacademy.io/api/v1/courses/index.php") else {
+        guard
+            let url = URL(
+                string:
+                    "https://iosacademy.io/api/v1/courses/index.php")
+        else {
             return
         }
-        
+
         // call api
-        let task = URLSession.shared.dataTask(with: url) { [weak self]data, _, error in
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
             guard let data = data, error == nil else {
                 return
             }
-            
+
             do {
                 /// Json decord
                 let courses = try JSONDecoder().decode([Course].self, from: data)
-                
+
                 /// Queue for ui update
                 DispatchQueue.main.async {
                     self?.courses = courses
                 }
-            }
-            catch {
+            } catch {
                 print(error)
             }
         }
         task.resume()
     }
 }
-
